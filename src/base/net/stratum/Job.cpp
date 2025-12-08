@@ -276,6 +276,12 @@ void xmrig::Job::copy(const Job &other)
 #   endif
 
     m_hasMinerSignature = other.m_hasMinerSignature;
+
+#   ifdef SUPPORT_JUNOCASH
+    m_isJunocash = other.m_isJunocash;
+    memcpy(m_junoHeader, other.m_junoHeader, sizeof(m_junoHeader));
+    memcpy(m_junoTarget, other.m_junoTarget, sizeof(m_junoTarget));
+#   endif
 }
 
 
@@ -332,6 +338,12 @@ void xmrig::Job::move(Job &&other)
 #   endif
 
     m_hasMinerSignature = other.m_hasMinerSignature;
+
+#   ifdef SUPPORT_JUNOCASH
+    m_isJunocash = other.m_isJunocash;
+    memcpy(m_junoHeader, other.m_junoHeader, sizeof(m_junoHeader));
+    memcpy(m_junoTarget, other.m_junoTarget, sizeof(m_junoTarget));
+#   endif
 }
 
 
