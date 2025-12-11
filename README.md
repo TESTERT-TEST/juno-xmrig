@@ -4,8 +4,8 @@ XMRig fork with native Junocash mining support.
 ## Download
 Pre-built binaries are available from the [Releases](https://github.com/juno-cash/juno-xmrig/releases) page:
 - **Linux x64**: `xmrig-vX.X.X-linux-x64.zip`
-- **macOS x64**: `xmrig-vX.X.X-macos-x64.zip`
-- **macOS ARM64** (Apple Silicon): `xmrig-vX.X.X-macos-arm64.zip`
+- **macOS x64**: `xmrig-vX.X.X-macos-x64.zip` (requires macOS 14+ Sonoma)
+- **macOS ARM64** (Apple Silicon): `xmrig-vX.X.X-macos-arm64.zip` (requires macOS 14+ Sonoma)
 
 ## Features
 - **Junocash Pool Mining**: Connect to Junocash stratum pools (e.g., pool.juno.ad)
