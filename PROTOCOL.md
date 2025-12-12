@@ -3,7 +3,8 @@
 ## Overview
 
 Junocash uses a modified stratum protocol based on CryptoNote stratum but with
-Zcash-style 140-byte headers and 32-byte nonces.
+Zcash-style 140-byte headers. Pool mining uses standard 4-byte nonces while
+solo mining uses full 32-byte nonces.
 
 ## Job Notification
 
@@ -33,7 +34,10 @@ Zcash-style 140-byte headers and 32-byte nonces.
 | 68-99 | 32 | hashBlockCommitments | Internal (reversed from display) |
 | 100-103 | 4 | nTime | Little-endian |
 | 104-107 | 4 | nBits (compact target) | Little-endian |
-| 108-139 | 32 | nNonce | 256-bit value |
+| 108-111 | 4 | nNonce (miner) | Little-endian (pool mining) |
+| 112-139 | 28 | nNonce (extranonce) | Pool-assigned (pool mining) |
+
+Note: For solo mining, bytes 108-139 form a single 32-byte nonce (256-bit value).
 
 ## Share Submission
 
@@ -46,7 +50,7 @@ Zcash-style 140-byte headers and 32-byte nonces.
   "params": {
     "id": "worker_id",
     "job_id": "259",
-    "nonce": "<64 hex chars = 32 bytes>",
+    "nonce": "<8 hex chars = 4 bytes>",
     "result": "<64 hex chars = 32 bytes (hash)>"
   }
 }
@@ -54,9 +58,10 @@ Zcash-style 140-byte headers and 32-byte nonces.
 
 ### Key Differences from CryptoNote
 
-1. **Nonce Size**: 32 bytes instead of 4 bytes
+1. **Nonce Size**: 4 bytes for pool mining (same as standard), 32 bytes for solo mining
 2. **Blob Size**: 140 bytes instead of 76 bytes
-3. **Nonce Position**: Bytes 108-139 instead of byte 39
+3. **Nonce Position**: Bytes 108-111 (miner nonce) instead of byte 39
+4. **Extranonce**: Bytes 112-139 reserved for pool-assigned extranonce (pool mining only)
 
 ## Target Handling
 
@@ -147,16 +152,24 @@ The node constructs the coinbase transaction.
 
 ## Nonce Increment Strategy
 
-For pool mining, the miner typically:
-1. Receives a job with a 140-byte blob (nonce at bytes 108-139 is usually zeroed)
-2. Increments nonce as a 256-bit integer starting from 0
+### Pool Mining
+1. Receives a job with a 140-byte blob (bytes 112-139 contain pool's extranonce)
+2. Increments 4-byte nonce at bytes 108-111 as a 32-bit integer
+3. Preserves bytes 112-139 (extranonce) unchanged
+4. For each nonce value, computes RandomX hash of the full 140-byte blob
+5. If hash <= target, submits the share with the winning 4-byte nonce
+
+### Solo Mining
+1. Receives block template and constructs 140-byte header
+2. Increments full 32-byte nonce at bytes 108-139 (256-bit search space)
 3. For each nonce value, computes RandomX hash of the full 140-byte blob
-4. If hash <= target, submits the share with the winning 32-byte nonce
+4. If hash <= target, submits the block with the winning 32-byte nonce
 
 ## Hash Computation
 
 ```cpp
-// Input: 140-byte header blob (nonce already inserted at bytes 108-139)
+// Pool mining: 4-byte nonce at bytes 108-111, extranonce at 112-139
+// Solo mining: 32-byte nonce at bytes 108-139
 // Output: 32-byte RandomX hash
 
 randomx_calculate_hash(vm, blob, 140, hash);
